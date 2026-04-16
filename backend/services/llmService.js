@@ -59,7 +59,7 @@ async function generateLLMResponse(user, chatHistory, latestMessage, topDocument
         const response = await hf.chatCompletion({
             model: MODEL,
             messages: messages,
-            max_tokens: 600,
+            max_tokens: 450,
             temperature: 0.3
         });
 

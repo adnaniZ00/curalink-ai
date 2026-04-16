@@ -22,7 +22,7 @@ async function fetchClinicalTrials(diseaseCondition, size = 20) {
     console.log(`[Fetch] Starting ClinicalTrials.gov for condition: ${diseaseCondition}`);
     try {
         const url = `https://clinicaltrials.gov/api/v2/studies?query.cond=${encodeURIComponent(diseaseCondition)}&filter.overallStatus=RECRUITING&pageSize=${size}&format=json`;
-        const response = await axios.get(url);
+        const response = await axios.get(url, { timeout: 4500 });
         
         if (!response.data.studies) return [];
 
@@ -39,7 +39,7 @@ async function fetchClinicalTrials(diseaseCondition, size = 20) {
             };
         });
     } catch (error) {
-        console.error("[Error] ClinicalTrials fetch failed:", error.message);
+        console.error("[Error] ClinicalTrials fetch failed or timed out:", error.message);
         return []; 
     }
 }
@@ -49,7 +49,8 @@ async function fetchOpenAlex(query, size = 25) {
     try {
         const url = `https://api.openalex.org/works?search=${encodeURIComponent(query)}&per-page=${size}&page=1&sort=relevance_score:desc`;
         const response = await axios.get(url, {
-            headers: { 'User-Agent': 'Curalink-Hackathon-Project/1.0' } 
+            headers: { 'User-Agent': 'Curalink-Hackathon-Project/1.0' },
+            timeout: 4500 
         });
         
         if (!response.data.results) return [];
@@ -72,13 +73,13 @@ async function fetchPubMed(query, size = 20) {
     console.log(`[Fetch] Starting PubMed for query: ${query}`);
     try {
         const searchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&retmax=${size}&sort=pub+date&retmode=json`;
-        const searchRes = await axios.get(searchUrl);
+        const searchRes = await axios.get(searchUrl, { timeout: 4500 });
         const ids = searchRes.data.esearchresult?.idlist;
 
         if (!ids || ids.length === 0) return [];
 
         const fetchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${ids.join(',')}&retmode=xml`;
-        const fetchRes = await axios.get(fetchUrl);
+        const fetchRes = await axios.get(fetchUrl, { timeout: 5000 });
         
         const parser = new xml2js.Parser({ explicitArray: false });
         const result = await parser.parseStringPromise(fetchRes.data);
@@ -112,7 +113,6 @@ async function fetchPubMed(query, size = 20) {
             let titleText = "Unknown Title";
             if (articleData?.ArticleTitle) {
                 if (typeof articleData.ArticleTitle === 'object') {
-                    // Extract the main text and any potential internal text arrays to avoid CastError
                     titleText = articleData.ArticleTitle._ || "Unknown Title";
                 } else {
                     titleText = articleData.ArticleTitle;
@@ -129,7 +129,7 @@ async function fetchPubMed(query, size = 20) {
             };
         });
     } catch (error) {
-        console.error("[Error] PubMed fetch failed:", error.message);
+        console.error("[Error] PubMed fetch failed or timed out:", error.message);
         return [];
     }
 }
@@ -138,10 +138,12 @@ async function gatherAllResearch(diseaseContext, expandedQuery) {
     console.log(`\n--- Starting Data Retrieval Pipeline ---`);
     console.log(`Condition: ${diseaseContext} | Expanded Query: ${expandedQuery}`);
     
+    // REDUCED PAYLOAD SIZES: Fetching fewer docs dramatically speeds up both 
+    // network transfer times and the local WASM re-ranking processing delay!
     const results = await Promise.allSettled([
-        fetchClinicalTrials(diseaseContext, 20),
-        fetchOpenAlex(expandedQuery, 25),
-        fetchPubMed(expandedQuery, 20)
+        fetchClinicalTrials(diseaseContext, 10),
+        fetchOpenAlex(expandedQuery, 10),
+        fetchPubMed(expandedQuery, 8)
     ]);
 
     let combinedData = [];

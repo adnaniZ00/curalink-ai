@@ -49,30 +49,40 @@ async function rankDocuments(query, documents, topK = 8) {
     const queryTensor = await embedder(query, { pooling: 'mean', normalize: true });
     const queryVector = Array.from(queryTensor.data);
 
-    console.log(`[Re-Ranker] Processing and scoring ${documents.length} documents...`);
+    console.log(`[Re-Ranker] Processing and scoring ${documents.length} documents using high-performance array batching...`);
     
+    // Create an array of text strings for batch embedding
+    const textBatch = documents.map(doc => {
+        // Truncate to a reasonable character length to prevent OOM spikes on Render's 512MB RAM
+        const summary = doc.summary ? doc.summary.substring(0, 800) : "";
+        return `${doc.title}. ${summary}`;
+    });
+
     const scoredDocuments = [];
 
-    // 2. Loop through every document, embed its summary, and calculate similarity
-    for (const doc of documents) {
-        // We use the title + summary for a richer embedding context
-        const textToEmbed = `${doc.title}. ${doc.summary}`;
+    try {
+        // Perform 1 highly-optimized vector projection via ONNX/WASM instead of 65 sequential loops
+        const batchTensors = await embedder(textBatch, { pooling: 'mean', normalize: true });
         
-        try {
-            const docTensor = await embedder(textToEmbed, { pooling: 'mean', normalize: true });
-            const docVector = Array.from(docTensor.data);
+        // batchTensors.data contains all dimensions flattened. We chunk it back into individual vectors.
+        const embeddingSize = 384; // MiniLM-L6-v2 outputs 384 dimensions
+        const flatData = Array.from(batchTensors.data);
+        
+        for (let i = 0; i < documents.length; i++) {
+            const startIdx = i * embeddingSize;
+            const docVector = flatData.slice(startIdx, startIdx + embeddingSize);
             
             const score = cosineSimilarity(queryVector, docVector);
             
             scoredDocuments.push({
-                ...doc,
+                ...documents[i],
                 relevanceScore: score
             });
-        } catch (error) {
-            console.error(`[Error] Failed to embed document: ${doc.title.substring(0, 30)}...`, error.message);
-            // If it fails, give it a baseline score so it isn't completely lost
-            scoredDocuments.push({ ...doc, relevanceScore: 0 }); 
         }
+    } catch (error) {
+        console.error(`[Error] Batch embedding failed due to payload constraints:`, error.message);
+        // Fallback: Assign a flat score if embedding randomly crashes due to memory limits
+        return documents.slice(0, topK).map(doc => ({ ...doc, relevanceScore: 0 }));
     }
 
     // 3. Sort by highest relevance score descending
