@@ -88,8 +88,17 @@ async function rankDocuments(query, documents, topK = 8) {
     // 3. Sort by highest relevance score descending
     scoredDocuments.sort((a, b) => b.relevanceScore - a.relevanceScore);
 
-    // 4. Return only the top K (The precision step)
-    const finalSelection = scoredDocuments.slice(0, topK);
+    // 4. Return only the top K (The precision step) with a strict Quality Threshold
+    // We mandate a minimum 25% mathematical semantic similarity to the user's question.
+    const MIN_THRESHOLD = 0.25; 
+    const filteredDocuments = scoredDocuments.filter(doc => doc.relevanceScore >= MIN_THRESHOLD);
+    
+    // Fallback: If EVERYTHING completely failed the strict threshold, just return the absolute top 2
+    // so the AI still has some marginal context to lean on instead of breaking.
+    const finalSelection = filteredDocuments.length > 0 
+        ? filteredDocuments.slice(0, topK) 
+        : scoredDocuments.slice(0, 2);
+
     console.log(`[Re-Ranker] Filtering complete. Returning top ${finalSelection.length} highly relevant documents.`);
     
     return finalSelection;

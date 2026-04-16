@@ -50,13 +50,21 @@ const handleUserMessage = async (req, res) => {
         let topDocuments = [];
 
         if (!isConversational) {
-            // 3. Query Expansion Logic
-            const expandedQuery = `${user.diseaseOfInterest} AND ${message}`;
+            // 3. Intelligent Query Formulation
+            // Scientific databases (PubMed, OpenAlex) fail on conversational inputs.
+            // We strip out stop words and question marks to create a clean Boolean keyword search.
+            const stopWords = /\b(what|why|how|when|is|it|are|do|does|can|could|would|should|the|a|an|in|on|at|to|for|of|with|about|by|this|that|these|those|I|me|my|you|your|we|our)\b/gi;
+            const cleanKeywords = message.replace(stopWords, '').replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+            
+            const databaseQuery = cleanKeywords.length > 2 
+                ? `${user.diseaseOfInterest} AND ${cleanKeywords}` 
+                : user.diseaseOfInterest;
 
             // 4. Data Retrieval (Depth)
-            const rawDocuments = await gatherAllResearch(user.diseaseOfInterest, expandedQuery);
+            const rawDocuments = await gatherAllResearch(user.diseaseOfInterest, databaseQuery, cleanKeywords);
 
             // 5. Intelligent Re-Ranking (Precision)
+            // Note: The Re-Ranker still uses the original, full user message for mathematical similarity scoring!
             topDocuments = await rankDocuments(message, rawDocuments, 8);
         } else {
             console.log(`[Routing] Detected conversational intent ("${message}"). Bypassing research pipeline.`);

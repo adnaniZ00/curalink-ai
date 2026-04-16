@@ -18,10 +18,15 @@ function reconstructOpenAlexAbstract(invertedIndex) {
     }
 }
 
-async function fetchClinicalTrials(diseaseCondition, size = 20) {
-    console.log(`[Fetch] Starting ClinicalTrials.gov for condition: ${diseaseCondition}`);
+async function fetchClinicalTrials(diseaseCondition, cleanKeywords = "", size = 20) {
+    console.log(`[Fetch] Starting ClinicalTrials.gov for condition: ${diseaseCondition} | Keywords: ${cleanKeywords}`);
     try {
-        const url = `https://clinicaltrials.gov/api/v2/studies?query.cond=${encodeURIComponent(diseaseCondition)}&filter.overallStatus=RECRUITING&pageSize=${size}&format=json`;
+        let url = `https://clinicaltrials.gov/api/v2/studies?query.cond=${encodeURIComponent(diseaseCondition)}`;
+        if (cleanKeywords.length > 2) {
+            url += `&query.term=${encodeURIComponent(cleanKeywords)}`;
+        }
+        url += `&filter.overallStatus=RECRUITING&pageSize=${size}&format=json`;
+        
         const response = await axios.get(url, { timeout: 4500 });
         
         if (!response.data.studies) return [];
@@ -134,16 +139,16 @@ async function fetchPubMed(query, size = 20) {
     }
 }
 
-async function gatherAllResearch(diseaseContext, expandedQuery) {
+async function gatherAllResearch(diseaseContext, databaseQuery, cleanKeywords) {
     console.log(`\n--- Starting Data Retrieval Pipeline ---`);
-    console.log(`Condition: ${diseaseContext} | Expanded Query: ${expandedQuery}`);
+    console.log(`Condition: ${diseaseContext} | Database Query: ${databaseQuery}`);
     
     // REDUCED PAYLOAD SIZES: Fetching fewer docs dramatically speeds up both 
     // network transfer times and the local WASM re-ranking processing delay!
     const results = await Promise.allSettled([
-        fetchClinicalTrials(diseaseContext, 10),
-        fetchOpenAlex(expandedQuery, 10),
-        fetchPubMed(expandedQuery, 8)
+        fetchClinicalTrials(diseaseContext, cleanKeywords, 10),
+        fetchOpenAlex(databaseQuery, 10),
+        fetchPubMed(databaseQuery, 8)
     ]);
 
     let combinedData = [];
