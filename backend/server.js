@@ -31,7 +31,7 @@ mongoose.connect(process.env.MONGO_URI)
 app.get('/api/health', (req, res) => {
     res.status(200).json({ 
         status: 'Active', 
-        message: 'Curalink Backend Engine is running.',
+        message: 'OmniMed Backend Engine is running.',
         timestamp: new Date().toISOString()
     });
 });
@@ -54,5 +54,5 @@ app.use((err, req, res, next) => {
 // Start the Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`🚀 Curalink Backend running and ready for production on port ${PORT}`);
+    console.log(`🚀 OmniMed Backend running and ready for production on port ${PORT}`);
 });

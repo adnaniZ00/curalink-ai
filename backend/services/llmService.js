@@ -17,7 +17,7 @@ function buildSystemPrompt(user, documents) {
         return `[Source ${index + 1}: ${doc.title} (${doc.source})] \nSummary: ${shortSummary}\n`;
     }).join('\n');
 
-    return `You are Curalink, an AI Medical Research Assistant.
+    return `You are OmniMed, an AI Medical Research Assistant.
 Patient: ${user.name}
 Disease: ${user.diseaseOfInterest}.
 

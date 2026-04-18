@@ -57,7 +57,7 @@ async function fetchOpenAlex(query, size = 25) {
     try {
         const url = `https://api.openalex.org/works?search=${encodeURIComponent(query)}&per-page=${size}&page=1&sort=relevance_score:desc`;
         const response = await axios.get(url, {
-            headers: { 'User-Agent': 'Curalink-Hackathon-Project/1.0' },
+            headers: { 'User-Agent': 'OmniMed-Hackathon-Project/1.0' },
             timeout: 4500 
         });
         

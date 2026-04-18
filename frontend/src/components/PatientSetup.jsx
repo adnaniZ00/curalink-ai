@@ -38,7 +38,7 @@ export default function PatientSetup({ onComplete }) {
           <Activity size={48} />
         </div>
         
-        <h1 className="text-2xl font-bold text-center text-medical-dark mb-2">Curalink Setup</h1>
+        <h1 className="text-2xl font-bold text-center text-medical-dark mb-2">OmniMed Setup</h1>
         <p className="text-center text-slate-500 mb-8">Initialize Patient Research Context</p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -48,7 +48,7 @@ export default function PatientSetup({ onComplete }) {
               type="text" 
               required
               className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-medical-primary focus:outline-none"
-              placeholder="e.g. John Smith"
+              placeholder="Your Full Name"
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
             />
@@ -60,7 +60,7 @@ export default function PatientSetup({ onComplete }) {
               type="text" 
               required
               className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-medical-primary focus:outline-none"
-              placeholder="e.g. Parkinson's disease"
+              placeholder="Medical Condition (e.g., Diabetes)"
               value={formData.diseaseOfInterest}
               onChange={(e) => setFormData({...formData, diseaseOfInterest: e.target.value})}
             />
@@ -71,7 +71,7 @@ export default function PatientSetup({ onComplete }) {
             <input 
               type="text" 
               className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-medical-primary focus:outline-none"
-              placeholder="e.g. Toronto, Canada"
+              placeholder="City, Country (to find local trials)"
               value={formData.location}
               onChange={(e) => setFormData({...formData, location: e.target.value})}
             />

@@ -44,7 +44,7 @@ export default function ChatInterface({ userProfile }) {
       console.error("Chat error:", error);
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: '⚠️ Error connecting to the Curalink server. Please try again.' 
+        content: '⚠️ Error connecting to the OmniMed server. Please try again.' 
       }]);
     } finally {
       setIsTyping(false);
@@ -58,7 +58,7 @@ export default function ChatInterface({ userProfile }) {
       <div className="w-1/4 bg-white border-r border-slate-200 p-6 flex flex-col">
         <h2 className="text-xl font-bold text-medical-dark mb-6 flex items-center gap-2">
           <BookOpen className="text-medical-primary" />
-          Curalink AI
+          OmniMed AI
         </h2>
         
         <div className="bg-medical-light rounded-xl p-4 border border-blue-100">
