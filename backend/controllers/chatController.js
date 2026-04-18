@@ -61,7 +61,7 @@ const handleUserMessage = async (req, res) => {
                 : user.diseaseOfInterest;
 
             // 4. Data Retrieval (Depth)
-            const rawDocuments = await gatherAllResearch(user.diseaseOfInterest, databaseQuery, cleanKeywords);
+            const rawDocuments = await gatherAllResearch(user.diseaseOfInterest, databaseQuery, cleanKeywords, user.location);
 
             // 5. Intelligent Re-Ranking (Precision)
             // Note: The Re-Ranker still uses the original, full user message for mathematical similarity scoring!

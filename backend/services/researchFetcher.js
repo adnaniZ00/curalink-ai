@@ -18,12 +18,15 @@ function reconstructOpenAlexAbstract(invertedIndex) {
     }
 }
 
-async function fetchClinicalTrials(diseaseCondition, cleanKeywords = "", size = 20) {
-    console.log(`[Fetch] Starting ClinicalTrials.gov for condition: ${diseaseCondition} | Keywords: ${cleanKeywords}`);
+async function fetchClinicalTrials(diseaseCondition, cleanKeywords = "", userLocation = "", size = 20) {
+    console.log(`[Fetch] Starting ClinicalTrials.gov for condition: ${diseaseCondition} | Keywords: ${cleanKeywords} | Location: ${userLocation}`);
     try {
         let url = `https://clinicaltrials.gov/api/v2/studies?query.cond=${encodeURIComponent(diseaseCondition)}`;
         if (cleanKeywords.length > 2) {
             url += `&query.term=${encodeURIComponent(cleanKeywords)}`;
+        }
+        if (userLocation) {
+            url += `&query.locn=${encodeURIComponent(userLocation)}`;
         }
         url += `&filter.overallStatus=RECRUITING&pageSize=${size}&format=json`;
         
@@ -139,14 +142,14 @@ async function fetchPubMed(query, size = 20) {
     }
 }
 
-async function gatherAllResearch(diseaseContext, databaseQuery, cleanKeywords) {
+async function gatherAllResearch(diseaseContext, databaseQuery, cleanKeywords, userLocation) {
     console.log(`\n--- Starting Data Retrieval Pipeline ---`);
     console.log(`Condition: ${diseaseContext} | Database Query: ${databaseQuery}`);
     
     // REDUCED PAYLOAD SIZES: Fetching fewer docs dramatically speeds up both 
     // network transfer times and the local WASM re-ranking processing delay!
     const results = await Promise.allSettled([
-        fetchClinicalTrials(diseaseContext, cleanKeywords, 10),
+        fetchClinicalTrials(diseaseContext, cleanKeywords, userLocation, 10),
         fetchOpenAlex(databaseQuery, 10),
         fetchPubMed(databaseQuery, 8)
     ]);
